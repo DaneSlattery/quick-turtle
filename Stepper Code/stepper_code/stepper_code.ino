@@ -2,6 +2,7 @@
 // Big Easy Stepper code            *
 // Author: Nick Raal                *
 //         : Dane Slattery          *
+// Date: 17/07/2018                 *
 //***********************************
 
 
@@ -28,7 +29,6 @@ void setup() {
 
   //Setup serial connection to begin motor
   Serial.begin(9600);
-  Serial.println("Press 1 for standard forward stepping");
   Serial.println("Press 2 for sixteenth forward stepping");
   Serial.println();
 }
@@ -42,30 +42,44 @@ void resetPins() {
   digitalWrite(slp, HIGH);
 
 }
-
+/*
 // Steps the motor forward.
 void StepForward() {
+  Serial.println("User input 1");
+  Serial.println();
   digitalWrite(dir, LOW); //set direction to forward
-  for(int x = 1; x < 10; x++){
+  for(int i = 1; i < 24; i++){
+   for(int x = 1; x < 9; x++){
     digitalWrite(stp, HIGH);
-    delay(1);
+    delay(10);
     digitalWrite(stp, LOW); // set low to trigger again
-    delay(1);
+    delay(10);
   }
+  delay(100);
+ }
+ 
 }
+*/
 
+// using the H-H-H for sixteenth steps
 void SixteenStep(){
+  Serial.println("User input = 2");
+  Serial.println();
   digitalWrite(dir, LOW);
   // For Sixteenth step 4W1-2 Phase
   digitalWrite(ms1, HIGH);
   digitalWrite(ms2, HIGH);
   digitalWrite(ms3, HIGH);
 
-  for(int x = 1; x < 100; x++){
+ 
+  for(int x = 0; x < 24; x++){ // 24 is number or steps to go 360 degrees
+    for(int i = 0; i < 134; i++){   // 134 moves the stepper 15 degrees per step
     digitalWrite(stp, HIGH);
-    delay(1);
+    delay(1); 
     digitalWrite(stp, LOW);
     delay(1);
+    }
+    delay(1000); // increase these delays to hold the motor in place before shifting to next step
   }
   
 }
@@ -76,11 +90,9 @@ void loop() {
   while(Serial.available()){
     char input = Serial.read(); // read what user types
     digitalWrite(en, LOW); // allow motor to work
-    if(input == '1'){
-      StepForward();
-      
-    } else if(input == '2'){
+    if(input == '2'){
       SixteenStep();
+      digitalWrite(en, LOW);
     } else {
       Serial.println("Invalid Option");
       
