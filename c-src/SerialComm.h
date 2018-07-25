@@ -4,7 +4,7 @@
 #ifndef SERIAL_COMM_H
 #define SERIAL_COMM_H
 
-#define DEBUG 0
+#define DEBUG_SERIAL 0
 
 #include <stdio.h>
 #include <termios.h>

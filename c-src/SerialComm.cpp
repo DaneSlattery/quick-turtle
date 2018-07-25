@@ -39,10 +39,10 @@ int SerialInit()
 		toptions.c_lflag |= ICANON;
 		tcsetattr(fd, TCSANOW, &toptions);
 
-		if (DEBUG) printf("Sending INIT command: AT0.\n");
+		if (DEBUG_SERIAL) printf("Sending INIT command: AT0.\n");
 		write(fd, "AT0\r\n", 7);
 
-		if (DEBUG) printf("Waiting for response...\n");
+		if (DEBUG_SERIAL) printf("Waiting for response...\n");
 		int numRecBytes = read(fd, inputBuff, 64);
 		// insert terminating zero in the string
 		inputBuff[numRecBytes] = 0;
@@ -55,7 +55,7 @@ int SerialInit()
 		    inputBuff[2] == '\r'  &&
 	            inputBuff[3] == '\n' )	
 		{
-			if (DEBUG) printf("Received %i bytes, which read: %s\n", numRecBytes, inputBuff);
+			if (DEBUG_SERIAL) printf("Received %i bytes, which read: %s\n", numRecBytes, inputBuff);
 			return 0;
 		}
 		return 2;
@@ -65,10 +65,10 @@ int SerialInit()
 int StepperSpin()
 {
 	char inputBuff[64] = "Empty Buffer";
-	if (DEBUG) printf("Sending Spin command: AT1.\n");
+	if (DEBUG_SERIAL) printf("Sending Spin command: AT1.\n");
 	write(fd, "AT1\r\n", 7);
 
-	if (DEBUG) printf("Waiting for response...\n");
+	if (DEBUG_SERIAL) printf("Waiting for response...\n");
 	int numRecBytes = read(fd, inputBuff, 64);
 	// insert terminating zero in the string
 	inputBuff[numRecBytes] = 0;
@@ -81,7 +81,7 @@ int StepperSpin()
 	    inputBuff[2] == '\r'  &&
             inputBuff[3] == '\n' )	
 	{
-		if (DEBUG) printf("Received %i bytes, which read: %s\n", numRecBytes, inputBuff);
+		if (DEBUG_SERIAL) printf("Received %i bytes, which read: %s\n", numRecBytes, inputBuff);
 		return 0;
 	}	
 }
