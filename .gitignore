@@ -1,1 +1,3 @@
-exec
+c-src/data/example/
+c-src/exec
+*.out

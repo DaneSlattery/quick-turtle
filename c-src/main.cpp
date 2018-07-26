@@ -102,7 +102,7 @@ void RunAlgorithm()
 }
 
 // compile string: 
-// gcc main.cpp ImgCapture.cpp SerialComm.cpp -o exec `pkg-config --cflags --libs opencv` -lrealsense2 -std=c++11 -lstdc++
+// gcc main.cpp  SerialComm.cpp -o exec `pkg-config --cflags --libs opencv` -lpthread -lrealsense2 -std=c++11 -lstdc++
 
 int main(int argc, char *argv[])
 {
