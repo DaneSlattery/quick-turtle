@@ -2,3 +2,4 @@ c-src/data/example/
 c-src/exec
 *.out
 *.png
+c-src/build/**

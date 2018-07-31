@@ -1,3 +1,0 @@
-/home/dane/repos/quick-turtle/c-src/CMakeFiles/edit_cache.dir
-/home/dane/repos/quick-turtle/c-src/CMakeFiles/pcd_write.dir
-/home/dane/repos/quick-turtle/c-src/CMakeFiles/rebuild_cache.dir

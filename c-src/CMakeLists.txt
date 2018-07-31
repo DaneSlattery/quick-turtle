@@ -12,7 +12,5 @@ set(DEPENDENCIES realsense2 ${PCL_LIBRARIES})
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 
-
-
-add_executable (pcd_write main.cpp)
-target_link_libraries (pcd_write ${DEPENDENCIES})
+add_executable (a.out main.cpp SerialComm.cpp)
+target_link_libraries (a.out ${DEPENDENCIES})
