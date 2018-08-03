@@ -82,18 +82,27 @@ int main(int argc, char *argv[])
 		auto pcl_points = points_to_pcl(points, color);
   		pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_filtered (new pcl::PointCloud<pcl::PointXYZRGB>);
 		
-		// create a filter to get rid of bad values
-		pcl::PassThrough<pcl::PointXYZRGB> pass;
-		pass.setInputCloud(pcl_points);
-		pass.setFilterFieldName("z");
-		pass.setFilterLimits(0.1, 0.3);
+		// create a filter to get rid of bad z values
+		pcl::PassThrough<pcl::PointXYZRGB> passz;
+		passz.setInputCloud(pcl_points);
+		passz.setFilterFieldName("z");
+		passz.setFilterLimits(0.05, 0.4);
+		passz.filter(*cloud_filtered);
 
-		pass.filter(*cloud_filtered);
+		// create a filter to get rid of bad x values
+		pcl::PassThrough<pcl::PointXYZRGB> passx;
+		passx.setInputCloud(cloud_filtered);
+		passx.setFilterFieldName("x");
+		passx.setFilterLimits(-0.5, 0.5);
+		passx.filter(*cloud_filtered);
 
-		// for (int i = 0; i < cloud_filtered->points.size(); ++i)
-		// {
-		// 	std::cout << "x: " << cloud_filtered->points[i].x << "y: " << pcl_points->points[i].y << "z: " << pcl_points->points[i].z << std::endl;
-		// }
+		// create a filter to get rid of bad y values
+		pcl::PassThrough<pcl::PointXYZRGB> passy;
+		passy.setInputCloud(cloud_filtered);
+		passy.setFilterFieldName("y");
+		passy.setFilterLimits(-1, 1);
+		passy.filter(*cloud_filtered);
+
 
 		std::string filename = filedir;
 		filename.append(std::to_string(captureNum));

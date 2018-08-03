@@ -12,7 +12,7 @@ int SerialInit()
 	
 	printf("Connecting to Arduino...\n");
 	// Open Serial Port
-	fd = open("/dev/ttyUSB0", O_RDWR | O_NOCTTY);
+	fd = open("/dev/ttyUSB1", O_RDWR | O_NOCTTY);
 	if (fd > -1)
 	{
 		printf("Connected on Port %i.\n", fd);
