@@ -26,7 +26,7 @@ int SerialInit();
 int StepperSpin();
 
 // Stop the stepper.
-int StepperStop();
+int StepperDisable();
 
 // end the connection
 int SerialEnd();

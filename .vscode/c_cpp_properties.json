@@ -1,0 +1,22 @@
+{
+    "configurations": [
+        {
+            "name": "Linux",
+            "includePath": [
+                "/home/dane/Downloads/arduino-1.8.5/tools/**",
+                "/home/dane/Downloads/arduino-1.8.5/hardware/arduino/avr/**",
+                "${workspaceFolder}/**",
+                "/usr/include/pcl-1.7",
+                "/usr/include/eigen3",
+                "/usr/include/eigen3",
+                "/usr/include/vtk-6.2"
+            ],
+            "defines": [],
+            "compilerPath": "/usr/bin/gcc",
+            "cStandard": "c11",
+            "cppStandard": "c++17",
+            "intelliSenseMode": "clang-x64"
+        }
+    ],
+    "version": 4
+}
