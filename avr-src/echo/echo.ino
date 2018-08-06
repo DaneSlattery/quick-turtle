@@ -95,11 +95,12 @@ void loop() {
     {
       runMotor();
       Serial.println("SP");
-      resetPins();
+//      resetPins();
     }
     // STOP RESPONSE
     else if (incoming_command.equals("AT2\r\n"))
     {
+      resetPins();
       Serial.println("ST");
     }
   }

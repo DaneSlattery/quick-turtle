@@ -9,6 +9,8 @@
 #include <librealsense2/rs.hpp> // Realsense API
 #include <pcl/point_types.h>
 #include <pcl/io/pcd_io.h>
+#include <pcl/visualization/cloud_viewer.h>
+#include <pcl/visualization/pcl_visualizer.h>
 #include <pcl/filters/passthrough.h>
 
 // compile string: 
@@ -16,6 +18,7 @@
 
 pcl::PointCloud<pcl::PointXYZRGB>::Ptr points_to_pcl(const rs2::points& points, const rs2::video_frame& color);
 std::tuple<uint8_t, uint8_t, uint8_t>  get_texcolor(rs2::video_frame texture, rs2::texture_coordinate texcoords);
+void dimensionFilter(pcl::PointCloud<pcl::PointXYZRGB>::Ptr point_cloud_in, pcl::PointCloud<pcl::PointXYZRGB>::Ptr point_cloud_out, std::string dimension, const float lower, const float upper);
 
 int main(int argc, char *argv[])
 {	
@@ -32,7 +35,7 @@ int main(int argc, char *argv[])
 	else
 	{
 		std::cout << "Output path not specified" << std::endl;
-		std::cout << "\t Usage: ./exec ./data/dataset/" << std::endl;
+		std::cout << "\t Usage: ./quick_turtle /path/to/directory/" << std::endl;
 		return -1;
 	}
 
@@ -62,6 +65,191 @@ int main(int argc, char *argv[])
 		pipe.wait_for_frames();
 	}
 
+	// let user decide filter values
+    pcl::visualization::CloudViewer viewer("Cloud Viewer");	
+
+	bool filter_done = false;
+	auto frames = pipe.wait_for_frames();
+	rs2::frame color = frames.get_color_frame(); //.get_color_frame();
+	rs2::depth_frame depth = frames.get_depth_frame();
+	
+	
+	pc.map_to(color);
+	points = pc.calculate(depth);
+
+	// load the point cloud
+	auto pcl_points = points_to_pcl(points, color);
+	viewer.showCloud(pcl_points);
+	// viz.showCloud(pcl_points, "cloud");
+	// viz.resetCamera();
+	// filter values
+
+	float lowerX = -1;
+	float upperX = 1;
+	float lowerY = -1;
+	float upperY = 1;
+	float lowerZ = 0.01;
+	float upperZ = 1;				
+	dimensionFilter(pcl_points, pcl_points, "z", lowerZ, upperZ);
+
+	std::cout << "Filter the point cloud." << std::endl;
+
+	std::string response;
+	int state = 0;
+	pcl::PointCloud<pcl::PointXYZRGB>::Ptr temp(new pcl::PointCloud<pcl::PointXYZRGB>);
+
+	while (!filter_done)
+	{
+		switch (state)
+		{
+			case 0: 
+			{
+				std::cout << "Lower X: ";
+				std::cin >> lowerX;
+				std::cout << "x = [" << lowerX << ", " << upperX << "] y = [" << lowerY << ", " << upperY << "] z = [" << lowerZ << ", " << upperZ << "]" << std::endl;
+
+				dimensionFilter(pcl_points, temp, "x", lowerX, upperX);
+				cout << "num points: " << std::to_string(temp->points.size()) << std::endl;
+
+				viewer.showCloud(temp);
+				// viz.spinOnce();
+				std::cout << "Happy? [y/n]";
+
+				std::cin >> response;
+
+				if (response == "y") 
+				{
+					state = 1;
+					// copy the cloud data, not the pointer -_-
+					pcl::copyPointCloud(*temp, *pcl_points);
+				}
+				break;
+			}
+			case 1: 
+			{
+				std::cout << "Upper X: ";
+				std::cin >> upperX;
+				std::cout << "x = [" << lowerX << ", " << upperX << "] y = [" << lowerY << ", " << upperY << "] z = [" << lowerZ << ", " << upperZ << "]" << std::endl;
+
+
+				dimensionFilter(pcl_points, temp, "x", lowerX, upperX);
+				cout << "num points: " << std::to_string(temp->points.size()) << std::endl;
+
+				viewer.showCloud(temp);
+
+				// viz.spinOnce();
+				std::cout << "Happy? [y/n]";
+
+				std::cin >> response;
+
+				if (response == "y") 
+				{
+					state = 2;
+					pcl::copyPointCloud(*temp, *pcl_points);
+				}		
+				break;	
+			}
+			case 2: 
+			{
+				std::cout << "Lower Y: ";
+				std::cin >> lowerY;
+				std::cout << "x = [" << lowerX << ", " << upperX << "] y = [" << lowerY << ", " << upperY << "] z = [" << lowerZ << ", " << upperZ << "]" << std::endl;
+
+
+				dimensionFilter(pcl_points, temp, "y", lowerY, upperY);
+				cout << "num points: " << std::to_string(temp->points.size()) << std::endl;
+
+				viewer.showCloud(temp);
+				// viz.spinOnce();
+				std::cout << "Happy? [y/n]";
+
+				std::cin >> response;
+
+				if (response == "y") 
+				{
+					state = 3;
+					pcl::copyPointCloud(*temp, *pcl_points);
+				}
+				break;
+			}
+			case 3: 
+			{
+				std::cout << "Upper Y: ";
+				std::cin >> upperY;
+				std::cout << "x = [" << lowerX << ", " << upperX << "] y = [" << lowerY << ", " << upperY << "] z = [" << lowerZ << ", " << upperZ << "]" << std::endl;
+
+				dimensionFilter(pcl_points, temp, "y", lowerY, upperY);
+				cout << "num points: " << std::to_string(temp->points.size()) << std::endl;
+
+				viewer.showCloud(temp);
+				// viz.spinOnce();
+				std::cout << "Happy? [y/n]";
+
+				std::cin >> response;
+
+				if (response == "y") 
+				{
+					state = 4;
+					pcl::copyPointCloud(*temp, *pcl_points);
+				}
+				break;
+			}
+			case 4: 
+			{
+				std::cout << "Lower Z: ";
+				std::cin >> lowerZ;
+				std::cout << "x = [" << lowerX << ", " << upperX << "] y = [" << lowerY << ", " << upperY << "] z = [" << lowerZ << ", " << upperZ << "]" << std::endl;
+
+				dimensionFilter(pcl_points, temp, "z", lowerZ, upperZ);
+				cout << "num points: " << std::to_string(temp->points.size()) << std::endl;
+
+				viewer.showCloud(temp);
+				// viz.spinOnce();
+				std::cout << "Happy? [y/n]";
+
+				std::cin >> response;
+
+				if (response == "y") 
+				{
+					state = 5;
+					pcl::copyPointCloud(*temp, *pcl_points);
+				}
+				break;
+			}
+			case 5: 
+			{
+				std::cout << "Upper Z: ";
+				std::cin >> upperZ;
+				std::cout << "x = [" << lowerX << ", " << upperX << "] y = [" << lowerY << ", " << upperY << "] z = [" << lowerZ << ", " << upperZ << "]" << std::endl;
+
+				dimensionFilter(pcl_points, temp, "z", lowerZ, upperZ);
+				cout << "num points: " << std::to_string(temp->points.size()) << std::endl;
+
+				viewer.showCloud(temp);
+				// viz.spinOnce();
+				std::cout << "Happy? [y/n]";
+
+				std::cin >> response;
+
+				if (response == "y") 
+				{
+					filter_done = true;
+					pcl::copyPointCloud(*temp, *pcl_points);
+				}
+
+				break;
+			}
+			default: 
+			{
+				break;
+			}
+		}
+
+
+	}
+
+
+
 	for (int captureNum = 1; captureNum <= 24; captureNum++)
 	{
 		std::cout << captureNum << "/24" << std::endl;
@@ -79,30 +267,22 @@ int main(int argc, char *argv[])
 		pc.map_to(color);
 		points = pc.calculate(depth);
 
+		// load the point cloud
 		auto pcl_points = points_to_pcl(points, color);
+		cout << "num points: " << std::to_string(pcl_points->points.size()) << std::endl;
+
   		pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_filtered (new pcl::PointCloud<pcl::PointXYZRGB>);
-		
-		// create a filter to get rid of bad z values
-		pcl::PassThrough<pcl::PointXYZRGB> passz;
-		passz.setInputCloud(pcl_points);
-		passz.setFilterFieldName("z");
-		passz.setFilterLimits(0.05, 0.4);
-		passz.filter(*cloud_filtered);
 
 		// create a filter to get rid of bad x values
-		pcl::PassThrough<pcl::PointXYZRGB> passx;
-		passx.setInputCloud(cloud_filtered);
-		passx.setFilterFieldName("x");
-		passx.setFilterLimits(-0.5, 0.5);
-		passx.filter(*cloud_filtered);
+		dimensionFilter(pcl_points, cloud_filtered, "x", lowerX, upperX);
 
 		// create a filter to get rid of bad y values
-		pcl::PassThrough<pcl::PointXYZRGB> passy;
-		passy.setInputCloud(cloud_filtered);
-		passy.setFilterFieldName("y");
-		passy.setFilterLimits(-1, 1);
-		passy.filter(*cloud_filtered);
+		dimensionFilter(cloud_filtered, cloud_filtered, "y", lowerY, upperY);
 
+		// create a filter to get rid of bad z values
+		dimensionFilter(cloud_filtered, cloud_filtered, "z", lowerZ, upperZ);
+
+		viewer.showCloud(cloud_filtered);
 
 		std::string filename = filedir;
 		filename.append(std::to_string(captureNum));
@@ -111,9 +291,19 @@ int main(int argc, char *argv[])
 		std::cout << "Point cloud saved to: " << filename << std::endl;
 	}	
 
-	
+	// close the serial connection
+	SerialEnd();
 	return 0;
 }    
+
+void dimensionFilter(pcl::PointCloud<pcl::PointXYZRGB>::Ptr point_cloud_in,  pcl::PointCloud<pcl::PointXYZRGB>::Ptr point_cloud_out, std::string dimension, const float lower, const float upper)
+{
+		pcl::PassThrough<pcl::PointXYZRGB> pass;
+		pass.setInputCloud(point_cloud_in);
+		pass.setFilterFieldName(dimension);
+		pass.setFilterLimits(lower, upper);
+		pass.filter(*point_cloud_out);
+}
 
 std::tuple<uint8_t, uint8_t, uint8_t> get_texcolor(rs2::video_frame texture, rs2::texture_coordinate texcoords)
 {

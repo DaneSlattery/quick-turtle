@@ -2,6 +2,7 @@
 
 #include "SerialComm.h"
 
+// globally scoped file descriptor for the serial connection
 int fd;
 
 int SerialInit()
@@ -12,7 +13,7 @@ int SerialInit()
 	
 	printf("Connecting to Arduino...\n");
 	// Open Serial Port
-	fd = open("/dev/ttyUSB1", O_RDWR | O_NOCTTY);
+	fd = open("/dev/ttyUSB0", O_RDWR | O_NOCTTY);
 	if (fd > -1)
 	{
 		printf("Connected on Port %i.\n", fd);
@@ -84,4 +85,45 @@ int StepperSpin()
 		if (DEBUG_SERIAL) printf("Received %i bytes, which read: %s\n", numRecBytes, inputBuff);
 		return 0;
 	}	
+}
+
+// Disable the stepper
+int StepperDisable()
+{
+	char inputBuff[64] = "Empty Buffer";
+	if (DEBUG_SERIAL) printf("Sending Disable command: AT2.\n");
+	write(fd, "AT2\r\n", 7);
+
+	if (DEBUG_SERIAL) printf("Waiting for response...\n");
+	int numRecBytes = read(fd, inputBuff, 64);
+	// insert terminating zero in the string
+	inputBuff[numRecBytes] = 0;
+		
+	// expect OK\r\n in response
+		
+			
+	if (inputBuff[0] == 'S'   &&
+	    inputBuff[1] == 'T'   &&
+	    inputBuff[2] == '\r'  &&
+            inputBuff[3] == '\n' )	
+	{
+		if (DEBUG_SERIAL) printf("Received %i bytes, which read: %s\n", numRecBytes, inputBuff);
+		return 0;
+	}	
+}
+
+// end the connection
+int SerialEnd()
+{
+	// stop the stepper if it's active
+	StepperDisable();
+	
+	if (fd != -1)
+	{
+		close(fd);
+		printf("Serial Connection closed.\n");
+		return 0;
+	}
+	printf("Unable to close serial connection.\n");
+	return -1;
 }
