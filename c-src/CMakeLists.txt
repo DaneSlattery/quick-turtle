@@ -12,5 +12,5 @@ set(DEPENDENCIES realsense2 ${PCL_LIBRARIES})
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 
-add_executable (quick_turtle main.cpp SerialComm.cpp)
+add_executable (quick_turtle main.cpp SerialComm.cpp RealSenseGrabber.cpp)
 target_link_libraries (quick_turtle ${DEPENDENCIES})

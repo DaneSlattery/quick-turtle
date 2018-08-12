@@ -2,35 +2,52 @@
 
 #include "SerialComm.h"
 
-// globally scoped file descriptor for the serial connection
-int fd;
-
-int SerialInit()
+SerialComm::SerialComm(): fileDescriptor(-1)
 {
-//	int fd;
+
+}
+
+int SerialComm::send_command(std::string command)
+{
+    char inputBuff[64] = "Empty Buffer";
+
+	if (DEBUG_SERIAL) printf("Sending command: %s\n", command.c_str());
+	write(fileDescriptor, command.c_str(), 7);
+
+	if (DEBUG_SERIAL) printf("Waiting for response...\n");
+	int numRecBytes = read(fileDescriptor, inputBuff, 64);
+	// insert terminating zero in the string
+	inputBuff[numRecBytes] = 0;
+	
+	// expect OK\r\n in response
+	if (strcmp(inputBuff, commandReplyMap.at(command)) == 0) 	
+	{
+		if (DEBUG_SERIAL) printf("Received %i bytes, which read: %s\n", numRecBytes, inputBuff);
+		return numRecBytes;
+	}
+	return 0;
+}
+
+
+int SerialComm::serial_init()
+{
 	char inputBuff[64] = "Empty Buffer";
 	struct termios toptions;
 	
 	printf("Connecting to Arduino...\n");
-	// Open Serial Port
-	fd = open("/dev/ttyUSB0", O_RDWR | O_NOCTTY);
-	if (fd > -1)
-	{
-		printf("Connected on Port %i.\n", fd);
-	}
-	else
-	{
-		printf("ERR: Not connected, Arduino probably unplugged. Stopping.\n");
-		return 1;
-	}
 
-	if (fd > -1)
+	// Open Serial Port as a file
+	fileDescriptor = open("/dev/ttyUSB0", O_RDWR | O_NOCTTY);
+
+	if (fileDescriptor > -1)
 	{
+		printf("Connected on Port %i.\n", fileDescriptor);
+		
 		// Wait for Arduino reboot:
 		usleep(3500000);
 
 		// Serial Port Settings 
-		tcgetattr(fd, &toptions);
+		tcgetattr(fileDescriptor, &toptions);
 		cfsetispeed(&toptions, B9600);
 		cfsetospeed(&toptions, B9600);
 		toptions.c_cflag &= ~PARENB;
@@ -38,89 +55,66 @@ int SerialInit()
 		toptions.c_cflag &= ~CSIZE;
 		toptions.c_cflag |= CS8;
 		toptions.c_lflag |= ICANON;
-		tcsetattr(fd, TCSANOW, &toptions);
+		tcsetattr(fileDescriptor, TCSANOW, &toptions);
 
-		if (DEBUG_SERIAL) printf("Sending INIT command: AT0.\n");
-		write(fd, "AT0\r\n", 7);
-
-		if (DEBUG_SERIAL) printf("Waiting for response...\n");
-		int numRecBytes = read(fd, inputBuff, 64);
-		// insert terminating zero in the string
-		inputBuff[numRecBytes] = 0;
+		int numRecBytes = send_command("AT0\r\n");
 		
-		// expect OK\r\n in response
-		
-			
-		if (inputBuff[0] == 'O'   &&
-		    inputBuff[1] == 'K'   &&
-		    inputBuff[2] == '\r'  &&
-	            inputBuff[3] == '\n' )	
+		if (numRecBytes > 0) 
 		{
-			if (DEBUG_SERIAL) printf("Received %i bytes, which read: %s\n", numRecBytes, inputBuff);
 			return 0;
 		}
+		else
+		{
+			return 2;
+		}
+
+	}
+	else
+	{
+		printf("ERR: Not connected, Arduino probably unplugged. Stopping.\n");
+		return 1;
+	}
+
+}
+
+int SerialComm::stepper_spin()
+{
+	int numRecBytes = send_command("AT1\r\n");
+
+	if (numRecBytes > 0) 
+	{
+		return 0;
+	}
+	else
+	{
 		return 2;
 	}
 }
 
-int StepperSpin()
-{
-	char inputBuff[64] = "Empty Buffer";
-	if (DEBUG_SERIAL) printf("Sending Spin command: AT1.\n");
-	write(fd, "AT1\r\n", 7);
-
-	if (DEBUG_SERIAL) printf("Waiting for response...\n");
-	int numRecBytes = read(fd, inputBuff, 64);
-	// insert terminating zero in the string
-	inputBuff[numRecBytes] = 0;
-		
-	// expect OK\r\n in response
-		
-			
-	if (inputBuff[0] == 'S'   &&
-	    inputBuff[1] == 'P'   &&
-	    inputBuff[2] == '\r'  &&
-            inputBuff[3] == '\n' )	
-	{
-		if (DEBUG_SERIAL) printf("Received %i bytes, which read: %s\n", numRecBytes, inputBuff);
-		return 0;
-	}	
-}
-
 // Disable the stepper
-int StepperDisable()
+int SerialComm::stepper_disable()
 {
-	char inputBuff[64] = "Empty Buffer";
-	if (DEBUG_SERIAL) printf("Sending Disable command: AT2.\n");
-	write(fd, "AT2\r\n", 7);
-
-	if (DEBUG_SERIAL) printf("Waiting for response...\n");
-	int numRecBytes = read(fd, inputBuff, 64);
-	// insert terminating zero in the string
-	inputBuff[numRecBytes] = 0;
-		
-	// expect OK\r\n in response
-		
-			
-	if (inputBuff[0] == 'S'   &&
-	    inputBuff[1] == 'T'   &&
-	    inputBuff[2] == '\r'  &&
-            inputBuff[3] == '\n' )	
+	int numRecBytes = send_command("AT2\r\n");
+	
+	if (numRecBytes > 0) 
 	{
-		if (DEBUG_SERIAL) printf("Received %i bytes, which read: %s\n", numRecBytes, inputBuff);
 		return 0;
-	}	
+	}
+	else
+	{
+		return 2;
+	}
 }
 
 // end the connection
-int SerialEnd()
+int SerialComm::serial_end()
 {
 	// stop the stepper if it's active
-	StepperDisable();
+	stepper_disable();
 	
-	if (fd != -1)
+	if (fileDescriptor != -1)
 	{
-		close(fd);
+		close(fileDescriptor);
 		printf("Serial Connection closed.\n");
 		return 0;
 	}

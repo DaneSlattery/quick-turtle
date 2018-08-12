@@ -15,21 +15,40 @@
 #include <errno.h>
 #include <stdint.h>
 #include <sys/ioctl.h>
+#include <map>
 
-// Initialise the Arduino and file descriptor
-// Returns 0 if the micro responded.
-// Returns 1 if the SerialPort doesn't connect.
-// Returns 2 if the arduino responds incorrectly
-int SerialInit();
+class SerialComm 
+{
+private: 
+    // file descriptor 
+    int fileDescriptor; // file descriptor 
 
-// Spin the pole right round right round.
-int StepperSpin();
+    // commands and responses
+    std::map<std::string, char const *> commandReplyMap 
+    {
+        {"AT0\r\n", "OK\r\n"},
+        {"AT1\r\n", "SP\r\n"},
+        {"AT2\r\n", "AT\r\n"}
+    };
 
-// Stop the stepper.
-int StepperDisable();
+    int send_command(std::string command);
 
-// end the connection
-int SerialEnd();
+public:
+    SerialComm();
 
+    // Initialise the Arduino and file descriptor
+    // Returns 0 if the micro responded.
+    // Returns 1 if the SerialPort doesn't connect.
+    // Returns 2 if the arduino responds incorrectly
+    int serial_init();
+
+    // Spin the pole right round right round.
+    int stepper_spin();
+    // Stop the stepper.
+    int stepper_disable();
+
+    // end the connection
+    int serial_end();
+};
 
 #endif
