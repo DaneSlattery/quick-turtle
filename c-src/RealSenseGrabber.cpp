@@ -126,6 +126,15 @@ int RealSenseGrabber::grab_point_cloud()
 
     // update the current point cloud as a PCL cloud
     pcl_pc = points_to_pcl(rs_points, color);
+
+    // try rotate the point cloud to align to the viewer axis/world axis
+    float angle = M_PI/4;   // angle of rotation, radians = 45 degrees
+    // Using Eigen::Affine3f for 3D point cloud
+    Eigen::Affine3f transform = Eigen::Affine3f::Identity();
+    transform.rotate (Eigen::AngleAxisf (angle, Eigen::Vector3f::UnitX())); // x rotation
+    // applying the transformation to the cloud
+    pcl::transformPointCloud (*pcl_pc, *pcl_pc, transform);
+
     return 0;
 }
 

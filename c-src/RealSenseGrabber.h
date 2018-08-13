@@ -11,6 +11,7 @@
 #include <pcl/visualization/cloud_viewer.h> // cloud viewer
 #include <pcl/filters/passthrough.h>
 #include <pcl/io/pcd_io.h>
+#include <pcl/common/transforms.h> // allows for transforms
 
 
 // a self contained grabber class for the realsense camera.

@@ -7,7 +7,9 @@
                 ".",
                 "..",
                 "/usr/local/include/librealsense2/**",
-                "/usr/local/include/**"
+                "/usr/local/include/**",
+                "/usr/include/pcl-1.7",
+                "/usr/include/eigen3"
             ],
             "defines": [],
             "compilerPath": "/usr/bin/gcc",
