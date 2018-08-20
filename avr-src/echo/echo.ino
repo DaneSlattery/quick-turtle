@@ -1,4 +1,4 @@
-// Dane Slattery
+// Dane  Slattery
 // Nick Raal
 // Arduino Nano Communication Interface Program
 
@@ -10,6 +10,9 @@
 #define EN  7
 
 String incoming_command;
+const float angle = 15.0; // degrees
+float stepSize = 0.0;
+int numSteps;
 
 // the setup routine runs once when you press reset:
 void setup() 
@@ -25,7 +28,11 @@ void setup()
   pinMode(MS3, OUTPUT);
   pinMode(EN,  OUTPUT);
   resetPins();
-  
+
+  // calculate the number of steps for a given angle
+  stepSize = 1.8/16;
+  numSteps = round(angle/stepSize);
+
 }
 
 void resetPins()
@@ -37,8 +44,10 @@ void resetPins()
   digitalWrite(MS3, LOW); // 
   digitalWrite(EN, HIGH); // disabled
 }
+
 void runMotorTest()
-{
+{  
+  // set the direction to counter clock-wise
   digitalWrite(DIR, LOW);
 
   digitalWrite(MS1, HIGH); // 1/16 step
@@ -47,7 +56,7 @@ void runMotorTest()
 
   digitalWrite(EN,  LOW); // enable the driver
 
-  for (int x = 0; x < 10000; x++)
+  for (int x = 0; x < 3204; x++)
   {
     digitalWrite(STP, HIGH); //Trigger one step forward
     delayMicroseconds(500);
@@ -56,24 +65,9 @@ void runMotorTest()
   }
 }
 void runMotor()
-{
+{ 
+  // set the direction to counter clock-wise
   digitalWrite(DIR, LOW);
-  
-//  digitalWrite(MS1, LOW); // full step
-//  digitalWrite(MS2, LOW); // 
-//  digitalWrite(MS3, LOW); //
-  
-//  digitalWrite(MS1, HIGH);// half step
-//  digitalWrite(MS2, LOW); // 
-//  digitalWrite(MS3, LOW); //
-
-//  digitalWrite(MS1, LOW); // 1/4 step
-//  digitalWrite(MS2, HIGH);// 
-//  digitalWrite(MS3, LOW); //
-//
-//  digitalWrite(MS1, HIGH); // 1/8 step
-//  digitalWrite(MS2, HIGH); // 
-//  digitalWrite(MS3,  LOW); //
 
   digitalWrite(MS1, HIGH); // 1/16 step
   digitalWrite(MS2, HIGH); // 
@@ -81,19 +75,16 @@ void runMotor()
   
   digitalWrite(EN,  LOW); // enable the driver
   
-  for (int x = 0; x < 133; x++)
+  for (int x = 0; x < numSteps; x++)
   {
     digitalWrite(STP, HIGH); //Trigger one step forward
     delayMicroseconds(750);
     digitalWrite(STP, LOW); //Pull step pin low so it can be triggered again
     delayMicroseconds(750);
-
-//    delay(1);
   }
 
   // wait, to stop inertia
  delay(500);
-// resetPins();
 }
 
 // the loop routine runs over and over again forever:
