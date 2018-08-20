@@ -37,7 +37,24 @@ void resetPins()
   digitalWrite(MS3, LOW); // 
   digitalWrite(EN, HIGH); // disabled
 }
+void runMotorTest()
+{
+  digitalWrite(DIR, LOW);
 
+  digitalWrite(MS1, HIGH); // 1/16 step
+  digitalWrite(MS2, HIGH); // 
+  digitalWrite(MS3, HIGH); //
+
+  digitalWrite(EN,  LOW); // enable the driver
+
+  for (int x = 0; x < 10000; x++)
+  {
+    digitalWrite(STP, HIGH); //Trigger one step forward
+    delayMicroseconds(500);
+    digitalWrite(STP, LOW); //Pull step pin low so it can be triggered again
+    delayMicroseconds(500);
+  }
+}
 void runMotor()
 {
   digitalWrite(DIR, LOW);
@@ -67,9 +84,11 @@ void runMotor()
   for (int x = 0; x < 133; x++)
   {
     digitalWrite(STP, HIGH); //Trigger one step forward
-    delay(1);
+    delayMicroseconds(750);
     digitalWrite(STP, LOW); //Pull step pin low so it can be triggered again
-    delay(1);
+    delayMicroseconds(750);
+
+//    delay(1);
   }
 
   // wait, to stop inertia
@@ -102,6 +121,11 @@ void loop() {
     {
       resetPins();
       Serial.println("ST");
+    }
+    else if (incoming_command.equals("AT3\r\n"))
+    {
+      runMotorTest();
+      Serial.println("TE");
     }
   }
 }
