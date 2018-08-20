@@ -49,6 +49,10 @@
         "csignal": "cpp",
         "cstdarg": "cpp",
         "typeindex": "cpp",
-        "cinttypes": "cpp"
+        "cinttypes": "cpp",
+        "valarray": "cpp",
+        "core": "cpp",
+        "numericaldiff": "cpp",
+        "*.ipp": "cpp"
     }
 }

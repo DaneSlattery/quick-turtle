@@ -23,7 +23,7 @@
 class RealSenseGrabber
 {
 public:
-    typedef pcl::PointXYZRGB PointT;
+    typedef pcl::PointXYZRGBA PointT;
     typedef pcl::PointCloud<PointT> PCLCloud;
     typedef pcl::PointCloud<PointT>::Ptr PCLCloudPtr;
     
@@ -35,8 +35,6 @@ private:
 	rs2::points rs_points;
     // realsense capture pipeline
     rs2::pipeline pipe;
-    // pcl cloud viewer
-    pcl::visualization::CloudViewer viewer;
     // pcl current cloud
     RealSenseGrabber::PCLCloudPtr pcl_pc;
 
@@ -55,6 +53,9 @@ public:
     // constructor
     RealSenseGrabber();
  
+    // start the grabber
+    int init();
+
     // pcl pass through filter
     int dimension_filter(RealSenseGrabber::PCLCloudPtr point_cloud_in, RealSenseGrabber::PCLCloudPtr point_cloud_out, std::string dimension, const float lower, const float upper);
     
@@ -62,20 +63,13 @@ public:
     int user_filter_XYZ();
 
     // grab a frame and return a point cloud
-    int grab_point_cloud();
+    RealSenseGrabber::PCLCloudPtr grab_point_cloud();
     
     // get user input to filter one dimension
     int user_filter_capture(std::string dim, RealSenseGrabber::PCLCloudPtr temp);
 
     // apply the set filters to the saved point cloud
     int apply_filters();
-
-    // function is pretty obvious
-    int display_cloud();
-
-    // save the cloud to a specified filter
-    int save_cloud_to_disk(std::string filename);
-
 
 };
 

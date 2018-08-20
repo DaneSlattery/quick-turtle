@@ -10,7 +10,7 @@
 #define EN  7
 
 String incoming_command;
-const float angle = 15.0; // degrees
+const float angle = 10.0; // degrees
 float stepSize = 0.0;
 int numSteps;
 
@@ -32,7 +32,7 @@ void setup()
   // calculate the number of steps for a given angle
   stepSize = 1.8/16;
   numSteps = round(angle/stepSize);
-
+  Serial.println(numSteps);
 }
 
 void resetPins()

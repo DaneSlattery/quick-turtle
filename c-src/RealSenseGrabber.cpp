@@ -1,6 +1,18 @@
 #include "RealSenseGrabber.h"
 
-RealSenseGrabber::RealSenseGrabber(): viewer("Cloud Viewer")
+RealSenseGrabber::RealSenseGrabber()
+{
+    // // start streaming
+    // pipe.start();
+
+    // // let auto-exposure and initialisation happen
+	// for (auto i = 0; i < 30; ++i)
+	// {
+	// 	pipe.wait_for_frames();
+	// }
+}
+
+int RealSenseGrabber::init()
 {
     // start streaming
     pipe.start();
@@ -10,108 +22,9 @@ RealSenseGrabber::RealSenseGrabber(): viewer("Cloud Viewer")
 	{
 		pipe.wait_for_frames();
 	}
-
 }
 
-int RealSenseGrabber::user_filter_XYZ()
-{
-    RealSenseGrabber::PCLCloudPtr temp (new PCLCloud);
-    bool filterDone = false;
-
-
-    // put a new point cloud into the system
-    grab_point_cloud();
-    // filter the obvious bad z values (negative z values can't exist)
-    dimension_filter(pcl_pc, pcl_pc, "z", lowerZ, upperZ);
-    // show the cloud
-    viewer.showCloud(pcl_pc);
-    std::cout << "Number of points before filters: " << std::to_string(pcl_pc->points.size()) << std::endl;
-
-
-    std::cout << "Filter the point cloud..." << std::endl;
-
-    int state = 0;
-
-    while (!filterDone)
-    {
-        switch (state)
-        {
-            case 0:
-            {
-                if (user_filter_capture("x", temp) == 0) state = 1;
-                break;
-            }
-            case 1:
-            {
-                if (user_filter_capture("y", temp) == 0) state = 2;
-                break;
-            }  
-            case 2:
-            {
-                if (user_filter_capture("z", temp) == 0) filterDone = true;
-                break;
-            }
-            default:
-                break;
-
-        }
-    }
-
-
-    return 0;
-}
-
-int RealSenseGrabber::user_filter_capture(std::string dim, RealSenseGrabber::PCLCloudPtr temp)
-{
-    // capture the user input
-    float lower, upper;
-    std::cout << "Lower " << dim << ": ";
-    std::cin >> lower;
-    std::cout << std::endl;
-    std::cout << "Upper " << dim << ": ";
-    std::cin >> upper;
-
-    // filter out in the specified dimension
-    dimension_filter(pcl_pc, temp, dim, lower, upper);
-    std::cout << "Number of points after filter: " << std::to_string(temp->points.size()) << std::endl;
-
-    // display the filtered cloud
-    viewer.showCloud(temp);
-
-    // check if the defined boundaries are good
-    std::string response;
-    std::cout << "Happy? [y/n]: ";
-    std::cin >> response;
-
-    if (response == "y")
-    {
-        // copy the temp cloud into the current cloud
-        pcl::copyPointCloud(*temp, *pcl_pc);
-        if (dim == "x")
-        {
-            lowerX = lower;
-            upperX = upper;
-        }
-        else if (dim == "y")
-        {
-            lowerY = lower;
-            upperY = upper;
-        }
-        else if (dim == "z")
-        {
-            lowerZ = lower;
-            upperZ = upper;
-        }
-        // exit well
-        std::cout << dim << " dimension values saved." << std::endl;
-        return 0;
-    }
-    // exit fail
-    return -1;
-}
-
-
-int RealSenseGrabber::grab_point_cloud()
+RealSenseGrabber::PCLCloudPtr RealSenseGrabber::grab_point_cloud()
 {
     // wait for frames from the camera
     rs2::frameset frameSet = pipe.wait_for_frames();
@@ -127,15 +40,7 @@ int RealSenseGrabber::grab_point_cloud()
     // update the current point cloud as a PCL cloud
     pcl_pc = points_to_pcl(rs_points, color);
 
-    // try rotate the point cloud to align to the viewer axis/world axis
-    float angle = M_PI/4;   // angle of rotation, radians = 45 degrees
-    // Using Eigen::Affine3f for 3D point cloud
-    Eigen::Affine3f transform = Eigen::Affine3f::Identity();
-    transform.rotate (Eigen::AngleAxisf (angle, Eigen::Vector3f::UnitX())); // x rotation
-    // applying the transformation to the cloud
-    pcl::transformPointCloud (*pcl_pc, *pcl_pc, transform);
-
-    return 0;
+    return pcl_pc;
 }
 
 RealSenseGrabber::PCLCloudPtr RealSenseGrabber::points_to_pcl(const rs2::points& points, const rs2::video_frame& color)
@@ -163,6 +68,7 @@ RealSenseGrabber::PCLCloudPtr RealSenseGrabber::points_to_pcl(const rs2::points&
 		cloud->points[i].r = std::get<0>(current_color);
 		cloud->points[i].g = std::get<1>(current_color);
 		cloud->points[i].b = std::get<2>(current_color);
+        cloud->points[i].a = 0;
 	}
 
 	return cloud;
@@ -197,14 +103,4 @@ int RealSenseGrabber::apply_filters()
     return 0;
 }
 
-int RealSenseGrabber::display_cloud()
-{
-    viewer.showCloud(pcl_pc);
-    return 0;
-}
-
-int RealSenseGrabber::save_cloud_to_disk(std::string filename)
-{
-    pcl::io::savePCDFileASCII(filename, *pcl_pc);
-}
 
