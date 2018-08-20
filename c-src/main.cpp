@@ -12,6 +12,9 @@
 
 int main(int argc, char *argv[])
 {	
+	const float platformAngle = 15.0f;
+	float numRotations = 360.0f/platformAngle;
+
 	// read in the file directory where this should be saved
 	std::string filedir;
 	if (argc > 1)
