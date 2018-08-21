@@ -48,7 +48,8 @@ private:
 
     float statFilterMean = 20;
     float statFilterStdDev = 0.5;
-
+    // creating a pointer to store the final point cloud
+    ObjectModeller3D::PCLCloudPtr output;
     //
     ObjectModeller3D::PCLCloudPtr get_point_cloud(int cloudNum);
     
@@ -69,6 +70,9 @@ private:
 
     // 
     float offset_platform_rotation(ObjectModeller3D::PCLCloudPtr input, ObjectModeller3D::PCLCloudPtr output, int cloudNum);
+
+    // saving the point clouds to the output folder
+    int save_to_directory(std::string fileDir, ObjectModeller3D::PCLCloudPtr input, int i);
 
 public:
     // constructor

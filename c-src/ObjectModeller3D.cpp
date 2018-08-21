@@ -23,6 +23,9 @@ ObjectModeller3D::ObjectModeller3D(InputType _inputType, int _angle, std::string
     upperY = _upperY;
     lowerZ = _lowerZ;
     upperZ = _upperZ;
+    ObjectModeller3D::PCLCloudPtr temp(new ObjectModeller3D::PCLCloud);
+
+    output = temp;
 
     create_output_directory(inFileDir);
 
@@ -118,7 +121,9 @@ int ObjectModeller3D::generate_model()
         else finalViewer.spinOnce();
 
         // save the point cloud
-    
+        save_to_directory(inFileDir, cloud, i);
+
+
         if (DEBUG_OBJECT_MODELLER_3D) std::cout << std::endl;
 
     }
@@ -228,4 +233,28 @@ float ObjectModeller3D::offset_platform_rotation(ObjectModeller3D::PCLCloudPtr i
     transform.rotate(Eigen::AngleAxisf(angleFromOrigin, Eigen::Vector3f::UnitZ()));
     pcl::transformPointCloud(*input, *output, transform);
     return angleFromOrigin;
+}
+
+int ObjectModeller3D::save_to_directory(std::string fileDir, ObjectModeller3D::PCLCloudPtr input, int i)
+{
+    // initialising the output cloud
+    
+
+    std::string outFileName = fileDir;
+    outFileName.append("output/");
+    outFileName.append(std::to_string(i));
+    outFileName.append(".pcd");
+    cout << "trying to save Point cloud to: " << outFileName << endl;
+    pcl::io::savePCDFileASCII(outFileName, *input);
+    cout << "Point cloud saved to: " << outFileName << endl;
+    *output += *input; // add the input to the utput to create a final .pcd
+    // on the last iteration, the final point cloud must be saved to a single .pcd
+    if(i == 24)
+    {
+        std::string totalCloudFile = fileDir;
+        totalCloudFile.append("output/final.pcd");
+        pcl::io::savePCDFileASCII(totalCloudFile, *output);
+        cout << "The complete model has been saved to " << totalCloudFile << endl;
+    }
+
 }
