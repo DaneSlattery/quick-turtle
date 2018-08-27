@@ -4,7 +4,7 @@
 #ifndef OBJECT_MODELLER_3D_H
 #define OBJECT_MODELLER_3D_H
 
-#define DEBUG_OBJECT_MODELLER_3D 0
+#define DEBUG_OBJECT_MODELLER_3D 1
 
 #include "RealSenseGrabber.h"
 #include "SerialComm.h"
@@ -35,6 +35,8 @@ private:
     RealSenseGrabber rsGrabber;     //
     // the main container
     std::vector<ObjectModeller3D::PCLCloudPtr> alignedClouds; 
+    // THIS
+    std::vector<ObjectModeller3D::PCLCloudPtr> alignedClouds_ds; 
     float lowerX = -0.1;
     float upperX = 0.1;
 

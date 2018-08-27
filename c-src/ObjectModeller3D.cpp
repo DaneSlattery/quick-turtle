@@ -52,8 +52,11 @@ int ObjectModeller3D::generate_model()
     ObjectModeller3D::PCLCloudPtr cloud (new ObjectModeller3D::PCLCloud);
     ObjectModeller3D::PCLCloudPtr target (new ObjectModeller3D::PCLCloud);
 
+    // ObjectModeller3D::PCLCloudPtr cloud_ds (new ObjectModeller3D::PCLCloud);
+    // ObjectModeller3D::PCLCloudPtr target_ds (new ObjectModeller3D::PCLCloud);
 	pcl::visualization::PCLVisualizer finalViewer("Final");
-    finalViewer.addCoordinateSystem(0.1f);
+    
+    
 	// pcl::visualization::PCLVisualizer currentviewer("Current");
     // currentviewer.addCoordinateSystem(0.1f)
 
@@ -66,29 +69,49 @@ int ObjectModeller3D::generate_model()
     float currentAngle = 0;
     float score = 0;
     float totalScore = 0;
+    // THIS
+    // float score_ds =0;
+    // float totalScore_ds = 0;
 
     for (int i = 1; i <= numRotations; i++)
     {
+        // going to try do the same thing but with the full cloud
+
         // read in the point cloud
         cloud = get_point_cloud(i);
         std::cout << i << "/" << numRotations << "... ";
+
+        // filter out null data
+        // dimension_filter(cloud, cloud, "z", 0.01, 1);
+
 
         if (DEBUG_OBJECT_MODELLER_3D) 
         {
             std::cout << "Num points cloud before filtering " << cloud->points.size() << std::endl;
         }
-
+        // THIS
+        //  cloud_ds = get_point_cloud(i);
         // rigidly transform the point cloud
         camera_to_world(cloud, cloud);
 
-
+        // THIS transforms the original cloud
+        // camera_to_world(cloud_ds, cloud_ds);
         // offset the platform rotation
         currentAngle = offset_platform_rotation(cloud, cloud, i);
+
+        // THIS
+        // currentAngle = offset_platform_rotation(cloud_ds, cloud_ds, i);
 
         // apply a pass filter
         dimension_filter(cloud, cloud, "x", lowerX, upperX);
         dimension_filter(cloud, cloud, "y", lowerY, upperY);
         dimension_filter(cloud, cloud, "z", lowerZ, upperZ);
+       
+
+       // THIS
+    //     dimension_filter(cloud_ds, cloud_ds, "x", lowerX, upperX);
+    //     dimension_filter(cloud_ds, cloud_ds, "y", lowerY, upperY);
+    //     dimension_filter(cloud_ds, cloud_ds, "z", lowerZ, upperZ);
        
         // downsample the cloud
         down_sample(cloud, cloud, voxelLeafSize);
@@ -101,6 +124,8 @@ int ObjectModeller3D::generate_model()
             std::cout << "Num points in cloud after filtering " << cloud->points.size() << std::endl;
         }
 
+        // THIS
+        // stat_filter(cloud_ds, cloud_ds, statFilterMean, statFilterStdDev);
         // perform ICP
         if (i != 1) 
         {
@@ -108,15 +133,23 @@ int ObjectModeller3D::generate_model()
             score = register_point_cloud(target, cloud);
             totalScore += score;
             if (DEBUG_OBJECT_MODELLER_3D) std::cout << "The score of this registration is: " << score << std::endl;
+            // THIS
+            // target_ds = alignedClouds_ds[i-2];
+            // score_ds = register_point_cloud(target_ds, cloud_ds);
+            // totalScore_ds += score_ds;
         }
 
         alignedClouds.push_back(cloud);
         if (DEBUG_OBJECT_MODELLER_3D) std::cout << "Num clouds in alignedClouds: " << alignedClouds.size() << std::endl;
+        // THIS
+        // alignedClouds_ds.push_back(cloud_ds);
 
         // display the total model
         std::string cloudName = "PC";
         cloudName.append(std::to_string(i));
         finalViewer.addPointCloud(cloud, cloudName);
+        finalViewer.setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 1, cloudName);
+        finalViewer.addCoordinateSystem(0.05f);
         if (i == 1) finalViewer.spin();
         else finalViewer.spinOnce();
 
@@ -129,7 +162,8 @@ int ObjectModeller3D::generate_model()
     }
     float averageScore = totalScore/numRotations;
     std::cout << std::endl << "The average score of this registration is: " << averageScore << std::endl;
-
+    // float averageScore_ds = totalScore_ds/numRotations;
+    // std::cout << std::endl << "The average score of DS for this registration is: " << averageScore << std::endl;
     finalViewer.spin();
     if (inputType == InputType::Camera)
     {
@@ -191,7 +225,7 @@ void ObjectModeller3D::camera_to_world(ObjectModeller3D::PCLCloudPtr input, Obje
     Eigen::Affine3f transform = Eigen::Affine3f::Identity();
     // rotate to offset the camera angle
     float cameraAngle = 0;
-    if (inputType == InputType::Camera) float cameraAngle = M_PI/4;
+    if (inputType == InputType::Camera) cameraAngle = M_PI/4;
 
     transform.rotate(Eigen::AngleAxisf(cameraAngle, Eigen::Vector3f::UnitX()));
     pcl::transformPointCloud(*input, *output, transform);
