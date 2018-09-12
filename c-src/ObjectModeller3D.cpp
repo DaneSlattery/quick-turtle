@@ -48,8 +48,10 @@ int ObjectModeller3D::generate_model()
 {
     ObjectModeller3D::PCLCloudPtr cloud (new ObjectModeller3D::PCLCloud);
     ObjectModeller3D::PCLCloudPtr target (new ObjectModeller3D::PCLCloud);
+    ObjectModeller3D::PCLCloudPtr og_source (new ObjectModeller3D::PCLCloud);
 
 	pcl::visualization::PCLVisualizer finalViewer("Final");
+    
     finalViewer.addCoordinateSystem(0.1f);
 	// pcl::visualization::PCLVisualizer currentviewer("Current");
     // currentviewer.addCoordinateSystem(0.1f)
@@ -70,42 +72,82 @@ int ObjectModeller3D::generate_model()
         cloud = get_point_cloud(i);
         std::cout << i << "/" << numRotations << "... ";
 
+        finalViewer.addPointCloud(cloud, "a");
+        finalViewer.setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 3, "a");
+        finalViewer.spinOnce();
+        finalViewer.removePointCloud("a");
+
         if (DEBUG_OBJECT_MODELLER_3D) 
         {
-            std::cout << "Num points cloud before filtering " << cloud->points.size() << std::endl;
+            std::cout << "Num points cloud before filtering " << og_source->points.size() << std::endl;
         }
 
         // rigidly transform the point cloud
         camera_to_world(cloud, cloud);
 
-
-        // offset the platform rotation
-        currentAngle = offset_platform_rotation(cloud, cloud, i);
-
+        // finalViewer.addPointCloud(cloud, "a");
+        // finalViewer.spinOnce();
+        // finalViewer.removePointCloud("a");
         // apply a pass filter
         dimension_filter(cloud, cloud, "x", lowerX, upperX);
         dimension_filter(cloud, cloud, "y", lowerY, upperY);
         dimension_filter(cloud, cloud, "z", lowerZ, upperZ);
-       
+        // finalViewer.addPointCloud(cloud, "a");
+        // finalViewer.setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 3, "a");
+        // finalViewer.spin();
+        // finalViewer.removePointCloud("a");
+        // this is where we create the downsample
+
         // downsample the cloud
+        // pcl::copyPointCloud(*cloud, *og_source);
         down_sample(cloud, cloud, voxelLeafSize);
+        // finalViewer.addPointCloud(cloud, "a");
+        // finalViewer.setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 3, "a");
+        // finalViewer.spin();
+        // finalViewer.removePointCloud("a");
 
         // filter the point cloud
         stat_filter(cloud, cloud, statFilterMean, statFilterStdDev);
+        // finalViewer.addPointCloud(cloud, "a");
+        // finalViewer.setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 3, "a");
+        // finalViewer.spin();
+        // finalViewer.removePointCloud("a");
+        // offset the platform rotation
+        //  finalViewer.addPointCloud(cloud, "a");
+        currentAngle = offset_platform_rotation(cloud, cloud, i);
+
+        // finalViewer.addPointCloud(cloud, "a");
+        // finalViewer.spinOnce();
+        // finalViewer.removePointCloud("a");
+
         if (DEBUG_OBJECT_MODELLER_3D) 
         {
             std::cout << "Current angle: " << currentAngle*180/M_PI << std::endl;
             std::cout << "Num points in cloud after filtering " << cloud->points.size() << std::endl;
         }
-
+        
         // perform ICP
         if (i != 1) 
         {
             target = alignedClouds[i-2];
-            score = register_point_cloud(target, cloud);
+            // finalViewer.addPointCloud(target, "b");
+            // finalViewer.spin();
+           
+
+            score = register_point_cloud(target, cloud);// , og_source);
+
+       
             totalScore += score;
             if (DEBUG_OBJECT_MODELLER_3D) std::cout << "The score of this registration is: " << score << std::endl;
         }
+
+        // finalViewer.removePointCloud("a");
+        // finalViewer.removePointCloud("b");
+        // finalViewer.addPointCloud(cloud, "a");
+        // finalViewer.addPointCloud(target, "b");
+        // finalViewer.spin();
+        // finalViewer.removePointCloud("a");
+        // finalViewer.removePointCloud("b");
 
         alignedClouds.push_back(cloud);
         if (DEBUG_OBJECT_MODELLER_3D) std::cout << "Num clouds in alignedClouds: " << alignedClouds.size() << std::endl;
@@ -117,12 +159,12 @@ int ObjectModeller3D::generate_model()
         if (i == 1) finalViewer.spin();
         else finalViewer.spinOnce();
 
-        // save the point cloud
+        // save the point cloud - save the non-sampled one with the transformations
     
         if (DEBUG_OBJECT_MODELLER_3D) std::cout << std::endl;
 
     }
-    float averageScore = totalScore/numRotations;
+    float averageScore = totalScore/(numRotations-1);
     std::cout << std::endl << "The average score of this registration is: " << averageScore << std::endl;
 
     finalViewer.spin();
@@ -186,7 +228,10 @@ void ObjectModeller3D::camera_to_world(ObjectModeller3D::PCLCloudPtr input, Obje
     Eigen::Affine3f transform = Eigen::Affine3f::Identity();
     // rotate to offset the camera angle
     float cameraAngle = 0;
-    if (inputType == InputType::Camera) float cameraAngle = M_PI/4;
+    if (inputType == InputType::Camera)
+    {
+        cameraAngle = M_PI/4;
+    }
 
     transform.rotate(Eigen::AngleAxisf(cameraAngle, Eigen::Vector3f::UnitX()));
     pcl::transformPointCloud(*input, *output, transform);
@@ -196,12 +241,12 @@ void ObjectModeller3D::camera_to_world(ObjectModeller3D::PCLCloudPtr input, Obje
 
     // translate to offset the camera distance away from the object
     // translate the object in x    y and  z
-    transform.translation() << 0.0, 0.2, -0.13;
+    transform.translation() << 0.0, 0.16, -0.18;
     // apply the initial translation
     pcl::transformPointCloud(*output, *output, transform);
 }
 
-float ObjectModeller3D::register_point_cloud(ObjectModeller3D::PCLCloudPtr target, ObjectModeller3D::PCLCloudPtr source)
+float ObjectModeller3D::register_point_cloud(ObjectModeller3D::PCLCloudPtr target, ObjectModeller3D::PCLCloudPtr source) //,  ObjectModeller3D::PCLCloudPtr og_source)
 {    
     ObjectModeller3D::PCLCloudPtr out (new ObjectModeller3D::PCLCloud);
 
@@ -209,14 +254,14 @@ float ObjectModeller3D::register_point_cloud(ObjectModeller3D::PCLCloudPtr targe
     pcl::GeneralizedIterativeClosestPoint6D reg6d;
     reg6d.setInputSource(source);
     reg6d.setInputTarget(target);
-
+    
     reg6d.align(*out);
 
     // transforming the source into the target
     Eigen::Matrix4f fundamentalMatrix = Eigen::Matrix4f::Identity();
     fundamentalMatrix = reg6d.getFinalTransformation();
     pcl::transformPointCloud(*source, *source, fundamentalMatrix);    
-
+    // pcl::transformPointCloud(*og_source, *og_source, fundamentalMatrix);
     // the fitness score should be as close to zero as possible
     return reg6d.getFitnessScore();
 }

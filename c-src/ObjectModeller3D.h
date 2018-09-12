@@ -4,7 +4,7 @@
 #ifndef OBJECT_MODELLER_3D_H
 #define OBJECT_MODELLER_3D_H
 
-#define DEBUG_OBJECT_MODELLER_3D 0
+#define DEBUG_OBJECT_MODELLER_3D 1
 
 #include "RealSenseGrabber.h"
 #include "SerialComm.h"
@@ -65,7 +65,7 @@ private:
     void camera_to_world(ObjectModeller3D::PCLCloudPtr input, ObjectModeller3D::PCLCloudPtr output);
 
     // perform generalised 6D registration
-    float register_point_cloud(ObjectModeller3D::PCLCloudPtr target, ObjectModeller3D::PCLCloudPtr source);
+    float register_point_cloud(ObjectModeller3D::PCLCloudPtr target, ObjectModeller3D::PCLCloudPtr source); //,  ObjectModeller3D::PCLCloudPtr og_source);
 
     // 
     float offset_platform_rotation(ObjectModeller3D::PCLCloudPtr input, ObjectModeller3D::PCLCloudPtr output, int cloudNum);
